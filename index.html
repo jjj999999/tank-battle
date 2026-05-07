@@ -589,7 +589,16 @@
         }
 
         function checkEnemyPlayerCollision() {
-            if (player.invincible) return;
+            if (player.invincible) {
+                for (let enemy of enemies) {
+                    if (player.collidesWithRect(player.x, player.y, player.width, player.height,
+                        enemy.x, enemy.y, enemy.width, enemy.height)) {
+                        enemy.x = Math.random() * (canvas.width - enemy.width);
+                        enemy.y = Math.random() * (canvas.height / 3);
+                    }
+                }
+                return;
+            }
             for (let enemy of enemies) {
                 if (player.collidesWithRect(player.x, player.y, player.width, player.height,
                     enemy.x, enemy.y, enemy.width, enemy.height)) {
@@ -733,6 +742,8 @@
             player.x = canvas.width / 2 - TILE_SIZE / 2;
             player.y = canvas.height - TILE_SIZE * 2;
             player.direction = 0;
+            player.invincible = false;
+            player.invincibleTimer = 0;
 
             createBricks();
             spawnEnemies(3);
