@@ -178,7 +178,9 @@
             speed: 2,
             direction: 0,
             color: '#00ff88',
-            bulletCooldown: 0
+            bulletCooldown: 0,
+            invincible: false,
+            invincibleTimer: 0
         };
 
         let bullets = [];
@@ -429,18 +431,27 @@
                 player.direction = 1;
             }
 
-            if (canPlayerMove(newX, player.y)) {
+            newX = Math.max(0, Math.min(canvas.width - player.width, newX));
+            newY = Math.max(0, Math.min(canvas.height - player.height, newY));
+
+            if (canPlayerMove(newX, newY)) {
                 player.x = newX;
-            }
-            if (canPlayerMove(player.x, newY)) {
+                player.y = newY;
+            } else if (canPlayerMove(newX, player.y)) {
+                player.x = newX;
+            } else if (canPlayerMove(player.x, newY)) {
                 player.y = newY;
             }
 
-            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-
             if (player.bulletCooldown > 0) {
                 player.bulletCooldown--;
+            }
+
+            if (player.invincible) {
+                player.invincibleTimer--;
+                if (player.invincibleTimer <= 0) {
+                    player.invincible = false;
+                }
             }
 
             if (keys['Space']) {
@@ -525,7 +536,7 @@
                     }
                 }
 
-                if (player.collidesWithRect(player.x, player.y, player.width, player.height,
+                if (!player.invincible && player.collidesWithRect(player.x, player.y, player.width, player.height,
                     bullet.x, bullet.y, bullet.width, bullet.height)) {
                     lives--;
                     createExplosion(player.x + player.width / 2, player.y + player.height / 2, 'rgb(0, 255, 136)');
@@ -535,6 +546,8 @@
                     } else {
                         player.x = canvas.width / 2 - TILE_SIZE / 2;
                         player.y = canvas.height - TILE_SIZE * 2;
+                        player.invincible = true;
+                        player.invincibleTimer = 120;
                     }
                     return false;
                 }
@@ -548,6 +561,7 @@
         }
 
         function checkEnemyPlayerCollision() {
+            if (player.invincible) return;
             for (let enemy of enemies) {
                 if (player.collidesWithRect(player.x, player.y, player.width, player.height,
                     enemy.x, enemy.y, enemy.width, enemy.height)) {
@@ -559,6 +573,8 @@
                     } else {
                         player.x = canvas.width / 2 - TILE_SIZE / 2;
                         player.y = canvas.height - TILE_SIZE * 2;
+                        player.invincible = true;
+                        player.invincibleTimer = 120;
                     }
                     return;
                 }
@@ -569,10 +585,17 @@
             ctx.save();
             ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
             ctx.rotate(player.direction * Math.PI / 2);
+            
+            if (player.invincible && Math.floor(player.invincibleTimer / 5) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            
             ctx.fillStyle = player.color;
             ctx.fillRect(-player.width / 2, -player.height / 2, player.width, player.height);
             ctx.fillStyle = '#005533';
             ctx.fillRect(-player.width / 4, -player.height / 2 - 10, player.width / 2, 12);
+            
+            ctx.globalAlpha = 1;
             ctx.restore();
         }
 
