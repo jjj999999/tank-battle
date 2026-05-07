@@ -451,6 +451,7 @@
                 player.invincibleTimer--;
                 if (player.invincibleTimer <= 0) {
                     player.invincible = false;
+                    ensurePlayerSafe();
                 }
             }
 
@@ -504,6 +505,16 @@
 
             player.x = canvas.width / 2 - TILE_SIZE / 2;
             player.y = canvas.height - TILE_SIZE * 2;
+        }
+
+        function ensurePlayerSafe() {
+            for (let enemy of enemies) {
+                if (player.collidesWithRect(player.x, player.y, player.width, player.height,
+                    enemy.x, enemy.y, enemy.width, enemy.height)) {
+                    resetPlayerPosition();
+                    return;
+                }
+            }
         }
 
         function updateBullets() {
@@ -589,30 +600,25 @@
         }
 
         function checkEnemyPlayerCollision() {
-            if (player.invincible) {
-                for (let enemy of enemies) {
-                    if (player.collidesWithRect(player.x, player.y, player.width, player.height,
-                        enemy.x, enemy.y, enemy.width, enemy.height)) {
-                        enemy.x = Math.random() * (canvas.width - enemy.width);
-                        enemy.y = Math.random() * (canvas.height / 3);
-                    }
-                }
-                return;
-            }
             for (let enemy of enemies) {
                 if (player.collidesWithRect(player.x, player.y, player.width, player.height,
                     enemy.x, enemy.y, enemy.width, enemy.height)) {
-                    lives--;
-                    createExplosion(player.x + player.width / 2, player.y + player.height / 2, 'rgb(0, 255, 136)');
-                    updateUI();
-                    if (lives <= 0) {
-                        gameOver();
+                    if (player.invincible) {
+                        enemy.x = Math.random() * (canvas.width - enemy.width);
+                        enemy.y = Math.random() * (canvas.height / 3);
                     } else {
-                        resetPlayerPosition();
-                        player.invincible = true;
-                        player.invincibleTimer = 180;
+                        lives--;
+                        createExplosion(player.x + player.width / 2, player.y + player.height / 2, 'rgb(0, 255, 136)');
+                        updateUI();
+                        if (lives <= 0) {
+                            gameOver();
+                        } else {
+                            resetPlayerPosition();
+                            player.invincible = true;
+                            player.invincibleTimer = 180;
+                        }
+                        return;
                     }
-                    return;
                 }
             }
         }
