@@ -386,8 +386,15 @@
 
         function spawnEnemies(count) {
             for (let i = 0; i < count; i++) {
-                const x = Math.random() * (canvas.width - TILE_SIZE * 2);
-                const y = Math.random() * (canvas.height / 3);
+                let x, y;
+                let attempts = 0;
+                do {
+                    x = Math.random() * (canvas.width - TILE_SIZE * 2);
+                    y = Math.random() * (canvas.height / 3);
+                    attempts++;
+                } while (player.collidesWithRect(x, y, TILE_SIZE, TILE_SIZE, 
+                    player.x, player.y, player.width, player.height) && attempts < 10);
+                
                 const type = Math.random() > 0.7 ? 'fast' : 'normal';
                 enemies.push(new Enemy(x, y, type));
             }
@@ -600,7 +607,8 @@
         }
 
         function checkEnemyPlayerCollision() {
-            for (let enemy of enemies) {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
                 if (player.collidesWithRect(player.x, player.y, player.width, player.height,
                     enemy.x, enemy.y, enemy.width, enemy.height)) {
                     if (player.invincible) {
@@ -754,7 +762,7 @@
             player.y = canvas.height - TILE_SIZE * 2;
             player.direction = 0;
             player.invincible = true;
-            player.invincibleTimer = 60;
+            player.invincibleTimer = 120;
 
             createBricks();
             spawnEnemies(3);
