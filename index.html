@@ -175,7 +175,7 @@
             y: canvas.height - TILE_SIZE * 2,
             width: TILE_SIZE,
             height: TILE_SIZE,
-            speed: 4,
+            speed: 2,
             direction: 0,
             color: '#00ff88',
             bulletCooldown: 0
@@ -532,6 +532,9 @@
                     updateUI();
                     if (lives <= 0) {
                         gameOver();
+                    } else {
+                        player.x = canvas.width / 2 - TILE_SIZE / 2;
+                        player.y = canvas.height - TILE_SIZE * 2;
                     }
                     return false;
                 }
@@ -553,6 +556,9 @@
                     updateUI();
                     if (lives <= 0) {
                         gameOver();
+                    } else {
+                        player.x = canvas.width / 2 - TILE_SIZE / 2;
+                        player.y = canvas.height - TILE_SIZE * 2;
                     }
                     return;
                 }
