@@ -550,22 +550,24 @@
             }
         }
 
+        let spawnIndex = 0;
+        const spawnPositions = [
+            { x: TILE, y: 0 },
+            { x: canvas.width / 2 - TILE / 2, y: 0 },
+            { x: canvas.width - TILE * 2, y: 0 }
+        ];
+
         function spawnEnemy() {
             if (enemiesRemaining <= 0) return;
             if (enemies.length >= maxEnemiesOnScreen) return;
             
-            const spawnPoints = [
-                { x: TILE, y: 0 },
-                { x: canvas.width / 2 - TILE / 2, y: 0 },
-                { x: canvas.width - TILE * 2, y: 0 }
-            ];
+            const spawn = spawnPositions[spawnIndex % spawnPositions.length];
+            spawnIndex++;
             
-            let spawn;
-            let attempts = 0;
-            do {
-                spawn = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
-                attempts++;
-            } while (!isValidSpawnPosition(spawn.x, spawn.y) && attempts < 10);
+            if (!isValidSpawnPosition(spawn.x, spawn.y)) {
+                spawnEnemy();
+                return;
+            }
             
             enemies.push(new Enemy(spawn.x, spawn.y));
             enemiesRemaining--;
@@ -584,10 +586,15 @@
         }
 
         function spawnWave() {
+            spawnIndex = 0;
             enemiesRemaining = totalEnemiesPerWave;
+            
             spawnEnemy();
-            spawnEnemy();
-            spawnEnemy();
+            setTimeout(spawnEnemy, 500);
+            setTimeout(spawnEnemy, 1000);
+            setTimeout(spawnEnemy, 1500);
+            setTimeout(spawnEnemy, 2000);
+            
             lastKillTime = Date.now();
         }
 
