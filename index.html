@@ -477,6 +477,35 @@
             return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
         };
 
+        function resetPlayerPosition() {
+            const safePositions = [
+                { x: canvas.width / 2 - TILE_SIZE / 2, y: canvas.height - TILE_SIZE * 2 },
+                { x: TILE_SIZE, y: canvas.height - TILE_SIZE * 2 },
+                { x: canvas.width - TILE_SIZE * 2, y: canvas.height - TILE_SIZE * 2 },
+                { x: TILE_SIZE * 3, y: canvas.height - TILE_SIZE * 2 },
+                { x: canvas.width - TILE_SIZE * 4, y: canvas.height - TILE_SIZE * 2 }
+            ];
+
+            for (let pos of safePositions) {
+                let canPlace = true;
+                for (let enemy of enemies) {
+                    if (player.collidesWithRect(pos.x, pos.y, player.width, player.height,
+                        enemy.x, enemy.y, enemy.width, enemy.height)) {
+                        canPlace = false;
+                        break;
+                    }
+                }
+                if (canPlace) {
+                    player.x = pos.x;
+                    player.y = pos.y;
+                    return;
+                }
+            }
+
+            player.x = canvas.width / 2 - TILE_SIZE / 2;
+            player.y = canvas.height - TILE_SIZE * 2;
+        }
+
         function updateBullets() {
             bullets = bullets.filter(bullet => {
                 bullet.update();
@@ -544,10 +573,9 @@
                     if (lives <= 0) {
                         gameOver();
                     } else {
-                        player.x = canvas.width / 2 - TILE_SIZE / 2;
-                        player.y = canvas.height - TILE_SIZE * 2;
+                        resetPlayerPosition();
                         player.invincible = true;
-                        player.invincibleTimer = 120;
+                        player.invincibleTimer = 180;
                     }
                     return false;
                 }
@@ -571,10 +599,9 @@
                     if (lives <= 0) {
                         gameOver();
                     } else {
-                        player.x = canvas.width / 2 - TILE_SIZE / 2;
-                        player.y = canvas.height - TILE_SIZE * 2;
+                        resetPlayerPosition();
                         player.invincible = true;
-                        player.invincibleTimer = 120;
+                        player.invincibleTimer = 180;
                     }
                     return;
                 }
