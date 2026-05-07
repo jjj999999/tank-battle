@@ -502,9 +502,27 @@
                 { x: canvas.width - TILE * 2, y: TILE }
             ];
             
-            const spawn = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+            let spawn;
+            let attempts = 0;
+            do {
+                spawn = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+                attempts++;
+            } while (!isValidSpawnPosition(spawn.x, spawn.y) && attempts < 10);
+            
             enemies.push(new Enemy(spawn.x, spawn.y));
             enemiesRemaining--;
+        }
+
+        function isValidSpawnPosition(x, y) {
+            for (let brick of bricks) {
+                if (brick.type === 'brick') {
+                    if (x < brick.x + TILE && x + TILE > brick.x &&
+                        y < brick.y + TILE && y + TILE > brick.y) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         function spawnWave() {
