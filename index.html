@@ -10,11 +10,11 @@
             padding: 0;
             background-color: #1a1a1a;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             font-family: 'Arial', sans-serif;
+            gap: 30px;
         }
 
         #gameContainer {
@@ -29,18 +29,63 @@
             background-color: #000;
         }
 
-        #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
+        #infoPanel {
+            width: 180px;
+            background-color: #222;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
             color: #0f0;
             font-size: 14px;
             font-weight: bold;
-            text-shadow: 0 0 5px #0f0;
         }
 
-        #ui div {
-            margin-bottom: 5px;
+        #infoPanel .title {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        #infoPanel .item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #infoPanel .label {
+            color: #888;
+        }
+
+        #infoPanel .value {
+            color: #0f0;
+        }
+
+        #levelTransition {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        #levelTransition h2 {
+            color: #0f0;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        #levelTransition #nextWave {
+            color: #ff0;
+            font-size: 24px;
         }
 
         #startScreen, #gameOverScreen {
@@ -101,15 +146,17 @@
     </style>
 </head>
 <body>
+    <div id="infoPanel">
+        <div class="title">游戏信息</div>
+        <div class="item"><span class="label">得分:</span><span class="value" id="score">0</span></div>
+        <div class="item"><span class="label">生命:</span><span class="value" id="lives">3</span></div>
+        <div class="item"><span class="label">波次:</span><span class="value" id="wave">1</span></div>
+        <div class="item"><span class="label">消灭:</span><span class="value" id="kills">0</span></div>
+        <div class="item"><span class="label">剩余:</span><span class="value" id="remaining">20</span></div>
+    </div>
+    
     <div id="gameContainer">
         <canvas id="canvas" width="520" height="520"></canvas>
-        
-        <div id="ui">
-            <div>得分: <span id="score">0</span></div>
-            <div>生命: <span id="lives">3</span></div>
-            <div>波次: <span id="wave">1</span></div>
-            <div>消灭: <span id="kills">0</span></div>
-        </div>
 
         <div id="startScreen">
             <h1>坦克大战</h1>
@@ -126,6 +173,11 @@
             <div id="finalScore">得分: 0</div>
             <button onclick="startGame()">重新开始</button>
         </div>
+
+        <div id="levelTransition">
+            <h2>过关！</h2>
+            <div id="nextWave">下一波准备中...</div>
+        </div>
     </div>
 
     <script>
@@ -140,6 +192,9 @@
         let wave = 1;
         let kills = 0;
         let enemiesRemaining = 0;
+        let totalEnemiesPerWave = 20;
+        let lastKillTime = 0;
+        let maxEnemiesOnScreen = 4;
 
         let player = null;
         let enemies = [];
@@ -496,10 +551,13 @@
         }
 
         function spawnEnemy() {
+            if (enemiesRemaining <= 0) return;
+            if (enemies.length >= maxEnemiesOnScreen) return;
+            
             const spawnPoints = [
-                { x: TILE, y: TILE },
-                { x: canvas.width / 2 - TILE / 2, y: TILE },
-                { x: canvas.width - TILE * 2, y: TILE }
+                { x: TILE, y: 0 },
+                { x: canvas.width / 2 - TILE / 2, y: 0 },
+                { x: canvas.width - TILE * 2, y: 0 }
             ];
             
             let spawn;
@@ -526,10 +584,11 @@
         }
 
         function spawnWave() {
-            enemiesRemaining = 3 + wave;
+            enemiesRemaining = totalEnemiesPerWave;
             spawnEnemy();
-            setTimeout(spawnEnemy, 1000);
-            setTimeout(spawnEnemy, 2000);
+            spawnEnemy();
+            spawnEnemy();
+            lastKillTime = Date.now();
         }
 
         function checkBulletCollisions() {
@@ -562,6 +621,8 @@
                         createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 'big');
                         score += 100;
                         kills++;
+                        lastKillTime = Date.now();
+                        spawnEnemy();
                         updateUI();
                         break;
                     }
@@ -639,12 +700,33 @@
             document.getElementById('lives').textContent = lives;
             document.getElementById('wave').textContent = wave;
             document.getElementById('kills').textContent = kills;
+            document.getElementById('remaining').textContent = enemiesRemaining + enemies.length;
         }
 
         function gameOver() {
             gameRunning = false;
             document.getElementById('finalScore').textContent = `得分: ${score}`;
             document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        function showLevelTransition() {
+            gameRunning = false;
+            document.getElementById('nextWave').textContent = `第 ${wave + 1} 波准备中...`;
+            document.getElementById('levelTransition').style.display = 'flex';
+            
+            setTimeout(() => {
+                wave++;
+                bullets = [];
+                enemyBullets = [];
+                enemies = [];
+                explosions = [];
+                createMap();
+                spawnWave();
+                updateUI();
+                document.getElementById('levelTransition').style.display = 'none';
+                gameRunning = true;
+                gameLoop();
+            }, 3000);
         }
 
         function startGame() {
@@ -719,9 +801,15 @@
             checkBulletCollisions();
             checkEnemyPlayerCollision();
 
+            const now = Date.now();
+            if (now - lastKillTime > 10000 && enemies.length < maxEnemiesOnScreen) {
+                spawnEnemy();
+                lastKillTime = now;
+            }
+
             if (enemies.length === 0 && enemiesRemaining <= 0) {
-                wave++;
-                spawnWave();
+                showLevelTransition();
+                return;
             }
 
             handleInput();
